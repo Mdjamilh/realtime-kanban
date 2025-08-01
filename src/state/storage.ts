@@ -42,14 +42,17 @@ export async function rememberBoard(meta: BoardMeta): Promise<void> {
   }
 }
 
-/** A stable id for this browser, so presence and Lamport ties are consistent across reloads. */
+/**
+ * An id per tab (kept across reloads of that tab). Every replica needs its
+ * own id for Lamport tie-breaks, and it lets two tabs show up as two people.
+ */
 export function clientId(): string {
   const key = "realtime-kanban:client";
   try {
-    const existing = localStorage.getItem(key);
+    const existing = sessionStorage.getItem(key);
     if (existing) return existing;
     const id = crypto.randomUUID();
-    localStorage.setItem(key, id);
+    sessionStorage.setItem(key, id);
     return id;
   } catch {
     return crypto.randomUUID();
