@@ -5,11 +5,18 @@ import { useState } from "react";
 
 import type { ColumnView } from "../sync/board";
 import type { Replica } from "../sync/replica";
-import { Card } from "./Card";
+import { Card, type MoveDirection } from "./Card";
 
-type Props = { column: ColumnView; index: number; total: number; replica: Replica; onOpenCard: (id: string) => void };
+type Props = {
+  column: ColumnView;
+  index: number;
+  total: number;
+  replica: Replica;
+  onOpenCard: (id: string) => void;
+  onMoveCard: (id: string, direction: MoveDirection) => void;
+};
 
-export function Column({ column, index, total, replica, onOpenCard }: Props) {
+export function Column({ column, index, total, replica, onOpenCard, onMoveCard }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: "column" } });
   const [title, setTitle] = useState<string | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
@@ -86,7 +93,13 @@ export function Column({ column, index, total, replica, onOpenCard }: Props) {
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <ul ref={setNodeRef} className="flex min-h-12 flex-1 flex-col gap-2 overflow-y-auto px-1 pb-1">
           {column.cards.map((card) => (
-            <Card key={card.id} card={card} columnId={column.id} onOpen={() => onOpenCard(card.id)} />
+            <Card
+              key={card.id}
+              card={card}
+              columnId={column.id}
+              onOpen={() => onOpenCard(card.id)}
+              onMove={(direction) => onMoveCard(card.id, direction)}
+            />
           ))}
         </ul>
       </SortableContext>

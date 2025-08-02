@@ -25,8 +25,28 @@ export function CardFace({ card, dragging = false }: { card: CardView; dragging?
   );
 }
 
-export function Card({ card, columnId, onOpen }: { card: CardView; columnId: string; onOpen: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+export type MoveDirection = "up" | "down" | "left" | "right";
+
+const KEY_TO_DIRECTION: Record<string, MoveDirection> = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+};
+
+type CardProps = {
+  card: CardView;
+  columnId: string;
+  onOpen: () => void;
+  onMove: (direction: MoveDirection) => void;
+};
+
+/**
+ * Mouse and touch drag via dnd-kit; keyboard users move cards with
+ * Alt + arrow keys, which is predictable across nested columns.
+ */
+export function Card({ card, columnId, onOpen, onMove }: CardProps) {
+  const { listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
     data: { type: "card", columnId },
   });
@@ -38,10 +58,17 @@ export function Card({ card, columnId, onOpen }: { card: CardView; columnId: str
       className={isDragging ? "opacity-40" : ""}
     >
       <button
-        {...attributes}
         {...listeners}
+        data-card-id={card.id}
         onClick={onOpen}
-        aria-label={`${card.title || "Untitled card"}. Press space to pick up, arrow keys to move.`}
+        onKeyDown={(event) => {
+          const direction = KEY_TO_DIRECTION[event.key];
+          if (event.altKey && direction) {
+            event.preventDefault();
+            onMove(direction);
+          }
+        }}
+        aria-label={`${card.title || "Untitled card"}. Press Enter to open, Alt and arrow keys to move.`}
         className="block w-full cursor-grab rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing"
       >
         <CardFace card={card} />

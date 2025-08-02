@@ -1,7 +1,6 @@
 import {
   DndContext,
   DragOverlay,
-  KeyboardSensor,
   PointerSensor,
   closestCorners,
   useSensor,
@@ -9,19 +8,20 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { useBoard } from "../state/board-store";
 import { CardDialog } from "./CardDialog";
-import { CardFace } from "./Card";
+import { CardFace, type MoveDirection } from "./Card";
 import { Column } from "./Column";
 
 export function Board({ boardId }: { boardId: string }) {
   const { columns, replica, open } = useBoard();
   const [dragging, setDragging] = useState<string | null>(null);
   const [openCard, setOpenCard] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const [refocus, setRefocus] = useState<string | null>(null);
   const closeCard = useCallback(() => setOpenCard(null), []);
 
   useEffect(() => {
@@ -37,7 +37,6 @@ export function Board({ boardId }: { boardId: string }) {
   const sensors = useSensors(
     // A small distance lets a click open the card instead of starting a drag.
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const allCards = columns.flatMap((c) => c.cards);
@@ -59,6 +58,36 @@ export function Board({ boardId }: { boardId: string }) {
     replica.moveCard(String(active.id), target.id, index);
   };
 
+  /** Keyboard moves: Alt+↑/↓ within a column, Alt+←/→ to the neighbouring column. */
+  const moveByKey = (cardId: string, direction: MoveDirection) => {
+    if (!replica) return;
+    const col = columns.findIndex((c) => c.cards.some((k) => k.id === cardId));
+    const column = columns[col];
+    if (!column) return;
+    const index = column.cards.findIndex((k) => k.id === cardId);
+    const title = column.cards[index]?.title ?? "Card";
+
+    if (direction === "up" || direction === "down") {
+      const to = direction === "up" ? index - 1 : index + 1;
+      if (to < 0 || to >= column.cards.length) return;
+      replica.moveCard(cardId, column.id, to);
+      setAnnouncement(`${title} moved to position ${to + 1} of ${column.cards.length} in ${column.title}`);
+    } else {
+      const target = columns[direction === "left" ? col - 1 : col + 1];
+      if (!target) return;
+      replica.moveCard(cardId, target.id, Math.min(index, target.cards.length));
+      setAnnouncement(`${title} moved to ${target.title}`);
+    }
+    setRefocus(cardId);
+  };
+
+  // Keep focus on a card after a keyboard move re-renders it.
+  useEffect(() => {
+    if (!refocus) return;
+    document.querySelector<HTMLElement>(`[data-card-id="${refocus}"]`)?.focus();
+    setRefocus(null);
+  }, [columns, refocus]);
+
   if (!replica) return null;
 
   return (
@@ -78,6 +107,7 @@ export function Board({ boardId }: { boardId: string }) {
             total={columns.length}
             replica={replica}
             onOpenCard={setOpenCard}
+            onMoveCard={moveByKey}
           />
         ))}
         <button
@@ -87,6 +117,10 @@ export function Board({ boardId }: { boardId: string }) {
           <Plus className="size-4" /> Add column
         </button>
       </div>
+
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
 
       <DragOverlay>{dragging && findCard(dragging) ? <CardFace card={findCard(dragging)!} dragging /> : null}</DragOverlay>
 
