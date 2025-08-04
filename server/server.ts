@@ -66,6 +66,17 @@ export function createSyncServer({ store = new OpStore() }: { store?: OpStore } 
     });
   });
 
-  http.on("close", () => wss.close());
+  // http.close() waits for every connection to end, and upgraded WebSocket
+  // connections never end on their own, so close them first. Clients see a
+  // normal "going away" close and reconnect when the server is back.
+  const closeHttp = http.close.bind(http);
+  http.close = (callback) => {
+    for (const client of wss.clients) client.close(1001, "Server shutting down");
+    wss.close();
+    setTimeout(() => {
+      for (const client of wss.clients) client.terminate();
+    }, 1000).unref();
+    return closeHttp(callback);
+  };
   return http;
 }
