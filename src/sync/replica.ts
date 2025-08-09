@@ -99,15 +99,47 @@ export class Replica {
     this.emit({ kind: "card.delete", cardId });
   }
 
-  /** Seeds an empty board so first-time visitors see something useful. */
+  /**
+   * Seeds an empty board so first-time visitors see something useful. The
+   * seed ops are identical on every replica (fixed ids and stamps), so two
+   * tabs that open a new board at the same moment both seed it and the
+   * duplicates simply dedupe instead of producing six columns.
+   */
   seedIfEmpty() {
     if (this.log.length > 0) return;
-    const todo = this.addColumn("To do");
-    const doing = this.addColumn("In progress");
-    const done = this.addColumn("Done");
-    this.addCard(todo, "Open this board in a second tab");
-    this.addCard(todo, "Drag a card between columns");
-    this.addCard(doing, "Edit a card and watch the other tab update");
-    this.addCard(done, "Create a board");
+    const ops = seedOps();
+    this.receive(ops);
+    for (const op of ops) this.onLocalOp(op);
   }
+}
+
+const SEED: [column: string, title: string, cards: string[]][] = [
+  ["todo", "To do", ["Open this board in a second tab", "Drag a card between columns"]],
+  ["doing", "In progress", ["Edit a card and watch the other tab update"]],
+  ["done", "Done", ["Create a board"]],
+];
+
+function seedOps(): Op[] {
+  const ops: Op[] = [];
+  const stamp = () => ({ lamport: ops.length + 1, client: "seed" });
+  let columnPos: string | null = null;
+  for (const [key, title, cards] of SEED) {
+    columnPos = generateKeyBetween(columnPos, null);
+    const columnId = `seed-${key}`;
+    ops.push({ kind: "column.create", columnId, title, position: columnPos, id: `seed-op-${ops.length}`, stamp: stamp() });
+    let cardPos: string | null = null;
+    cards.forEach((cardTitle, i) => {
+      cardPos = generateKeyBetween(cardPos, null);
+      ops.push({
+        kind: "card.create",
+        cardId: `seed-${key}-${i}`,
+        columnId,
+        title: cardTitle,
+        position: cardPos,
+        id: `seed-op-${ops.length}`,
+        stamp: stamp(),
+      });
+    });
+  }
+  return ops;
 }
