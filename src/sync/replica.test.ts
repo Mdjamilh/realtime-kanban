@@ -73,4 +73,24 @@ describe("Replica", () => {
     r.seedIfEmpty();
     expect(r.view().map((c) => c.title)).toEqual(["To do", "In progress", "Done"]);
   });
+
+  it("does not duplicate the starter board when two replicas seed at once", () => {
+    const sent: Op[] = [];
+    const alice = new Replica("alice", (op) => sent.push(op));
+    const bob = new Replica("bob");
+    alice.seedIfEmpty();
+    bob.seedIfEmpty();
+    expect(sent).toHaveLength(alice.log.length); // seed ops are shared with peers
+
+    expect(bob.receive(alice.log)).toBe(0);
+    expect(alice.receive(bob.log)).toBe(0);
+    expect(bob.view()).toEqual(alice.view());
+    expect(bob.view()).toHaveLength(3);
+
+    // Seeded cards behave like any other card afterwards.
+    const card = bob.view()[0]!.cards[0]!.id;
+    bob.moveCard(card, bob.view()[2]!.id, 0);
+    alice.receive(bob.log);
+    expect(alice.view()[2]?.cards[0]?.id).toBe(card);
+  });
 });
