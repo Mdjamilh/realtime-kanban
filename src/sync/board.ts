@@ -37,6 +37,7 @@ type CardState = {
  */
 export type BoardState = {
   seen: Set<string>;
+  title?: Register<string>;
   columns: Map<string, ColumnState>;
   cards: Map<string, CardState>;
 };
@@ -62,6 +63,9 @@ export function applyOp(state: BoardState, op: Op): boolean {
   const s = op.stamp;
 
   switch (op.kind) {
+    case "board.rename":
+      state.title = write(state.title, op.title, s, op.id);
+      break;
     case "column.create": {
       const c = column(state, op.columnId);
       c.created = true;

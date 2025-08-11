@@ -48,6 +48,15 @@ export class Replica {
     return (this.cached ??= materialize(this.state));
   }
 
+  /** The board's name, or an empty string if nobody has named it yet. */
+  title(): string {
+    return this.state.title?.value ?? "";
+  }
+
+  renameBoard(title: string) {
+    this.emit({ kind: "board.rename", title });
+  }
+
   /** A key between the neighbours at `index` once `movingId` is taken out of the list. */
   private static positionAt(items: { id: string; position: string }[], index: number, movingId?: string): string {
     const others = items.filter((item) => item.id !== movingId);

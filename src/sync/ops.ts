@@ -13,6 +13,7 @@ export const CARD_COLORS = ["none", "red", "amber", "green", "sky", "violet"] as
 export type CardColor = (typeof CARD_COLORS)[number];
 
 export type OpPayload =
+  | { kind: "board.rename"; title: string }
   | { kind: "column.create"; columnId: string; title: string; position: string }
   | { kind: "column.rename"; columnId: string; title: string }
   | { kind: "column.move"; columnId: string; position: string }
