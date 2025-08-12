@@ -67,6 +67,18 @@ describe("Replica", () => {
     expect(bob.view()[0]?.cards[0]?.title).toBe("Final");
   });
 
+  it("names the board with a last-writer-wins title", () => {
+    const alice = new Replica("alice");
+    const bob = new Replica("bob");
+    expect(alice.title()).toBe("");
+    alice.renameBoard("Sprint 12");
+    bob.renameBoard("Launch");
+    alice.receive(bob.log);
+    bob.receive(alice.log);
+    expect(alice.title()).toBe("Launch"); // same Lamport time, "bob" wins the tie
+    expect(bob.title()).toBe("Launch");
+  });
+
   it("seeds a starter board only once", () => {
     const r = new Replica("alice");
     r.seedIfEmpty();

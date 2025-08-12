@@ -13,6 +13,13 @@ const build = (ops: Op[]) => {
   return materialize(state);
 };
 
+/** Everything a viewer can see: the columns plus the board's name. */
+const visible = (ops: Op[]) => {
+  const state = emptyBoard();
+  for (const o of ops) applyOp(state, o);
+  return { title: state.title?.value, columns: materialize(state) };
+};
+
 describe("board ops", () => {
   it("creates columns and cards in position order", () => {
     const view = build([
@@ -82,6 +89,7 @@ describe("convergence (property-based)", () => {
     fc.record({ kind: fc.constant("card.edit" as const), cardId: fc.constantFrom(...CARDS), field: fc.constantFrom("title" as const, "description" as const), value: fc.string() }),
     fc.record({ kind: fc.constant("card.move" as const), cardId: fc.constantFrom(...CARDS), columnId: fc.constantFrom(...COLUMNS), position: fc.constantFrom(...POSITIONS) }),
     fc.record({ kind: fc.constant("card.delete" as const), cardId: fc.constantFrom(...CARDS) }),
+    fc.record({ kind: fc.constant("board.rename" as const), title: fc.string() }),
   );
   const ops = fc
     .array(fc.tuple(payload, fc.integer({ min: 1, max: 6 }), fc.constantFrom("a", "b", "c")), { maxLength: 40 })
@@ -91,7 +99,7 @@ describe("convergence (property-based)", () => {
     fc.assert(
       fc.property(ops, fc.func(fc.integer()), (list, rank) => {
         const shuffled = [...list].sort((x, y) => rank(x.id) - rank(y.id));
-        expect(build(shuffled)).toEqual(build(list));
+        expect(visible(shuffled)).toEqual(visible(list));
       }),
       { numRuns: 300 },
     );
@@ -100,7 +108,7 @@ describe("convergence (property-based)", () => {
   it("re-delivering ops changes nothing", () => {
     fc.assert(
       fc.property(ops, (list) => {
-        expect(build([...list, ...list.slice().reverse()])).toEqual(build(list));
+        expect(visible([...list, ...list.slice().reverse()])).toEqual(visible(list));
       }),
     );
   });
