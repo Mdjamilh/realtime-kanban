@@ -43,7 +43,11 @@ export function Home() {
                   href={boardHref(board.id)}
                   className="flex items-center justify-between px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 >
-                  <span className="font-mono text-sm">{board.id}</span>
+                  {board.name ? (
+                    <span className="font-medium">{board.name}</span>
+                  ) : (
+                    <span className="font-mono text-sm text-zinc-500">Untitled · {board.id}</span>
+                  )}
                   <span className="flex items-center gap-2 text-xs text-zinc-500">
                     {new Date(board.lastOpened).toLocaleString()} <ArrowRight className="size-4" />
                   </span>

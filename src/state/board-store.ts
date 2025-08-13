@@ -14,6 +14,7 @@ const SYNC_URL = import.meta.env.VITE_SYNC_URL as string | undefined;
 type BoardStore = {
   boardId: string | null;
   columns: ColumnView[];
+  title: string;
   peers: Presence[];
   status: TransportStatus;
   mode: Transport["kind"];
@@ -27,6 +28,7 @@ const me = identityFor(clientId());
 export const useBoard = create<BoardStore>((set, getState) => ({
   boardId: null,
   columns: [],
+  title: "",
   peers: [],
   status: "connecting",
   mode: SYNC_URL ? "server" : "tabs",
@@ -46,16 +48,23 @@ export const useBoard = create<BoardStore>((set, getState) => ({
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => void saveOps(boardId, replica.log), 250);
     };
+    let rememberedTitle: string | undefined;
     const refresh = () => {
-      set({ columns: replica.view() });
+      const title = replica.title();
+      set({ columns: replica.view(), title });
       persist();
+      // Keep the home page's "recent boards" list showing the current name.
+      if (title !== rememberedTitle) {
+        rememberedTitle = title;
+        void rememberBoard({ id: boardId, name: title, lastOpened: Date.now() });
+      }
     };
 
     const replica = new Replica(self, (op: Op) => {
       transport.send([op]);
       refresh();
     });
-    set({ boardId, replica, columns: [], peers: [], status: "connecting" });
+    set({ boardId, replica, columns: [], title: "", peers: [], status: "connecting" });
 
     replica.receive(await loadOps(boardId));
     // Another board may have been opened while we were loading.
@@ -88,7 +97,6 @@ export const useBoard = create<BoardStore>((set, getState) => ({
     };
     beat();
     const heartbeat = setInterval(beat, HEARTBEAT_MS);
-    void rememberBoard({ id: boardId, name: `Board ${boardId.slice(0, 6)}`, lastOpened: Date.now() });
 
     return () => {
       clearTimeout(seedTimer);
