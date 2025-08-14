@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { useTheme } from "../hooks/use-theme";
 import { useBoard } from "../state/board-store";
+import { BoardTitle } from "./BoardTitle";
 
 const STATUS: Record<string, { label: string; dot: string }> = {
   "tabs:online": { label: "Live across your tabs", dot: "bg-emerald-500" },
@@ -51,6 +52,10 @@ export function Header({ onBoard }: { onBoard: boolean }) {
 
       {onBoard && (
         <>
+          <span className="text-zinc-300 dark:text-zinc-700" aria-hidden>
+            /
+          </span>
+          <BoardTitle />
           <span className="ml-2 hidden items-center gap-2 text-xs text-zinc-500 sm:flex" role="status">
             <span className={`size-2 rounded-full ${indicator.dot}`} />
             {indicator.label}
