@@ -17,7 +17,7 @@ import { CardFace, type MoveDirection } from "./Card";
 import { Column } from "./Column";
 
 export function Board({ boardId }: { boardId: string }) {
-  const { columns, replica, open } = useBoard();
+  const { columns, replica, open, title } = useBoard();
   const [dragging, setDragging] = useState<string | null>(null);
   const [openCard, setOpenCard] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -33,6 +33,13 @@ export function Board({ boardId }: { boardId: string }) {
       cleanup();
     };
   }, [boardId, open]);
+
+  useEffect(() => {
+    document.title = `${title || "Untitled board"} · Realtime Kanban`;
+    return () => {
+      document.title = "Realtime Kanban";
+    };
+  }, [title]);
 
   const sensors = useSensors(
     // A small distance lets a click open the card instead of starting a drag.
