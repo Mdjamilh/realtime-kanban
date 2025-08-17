@@ -84,6 +84,19 @@ test("editing and deleting a card syncs, and boards survive a reload", async ({ 
   await expect(cardButton(a, "Ship v1")).toHaveCount(0);
 });
 
+test("naming a board syncs and shows up in recent boards", async ({ context }) => {
+  const { a, b } = await twoTabs(context);
+  await a.getByRole("button", { name: "Untitled board" }).click();
+  await a.getByLabel("Board name").fill("Launch plan");
+  await a.keyboard.press("Enter");
+
+  await expect(b.getByRole("button", { name: "Launch plan" })).toBeVisible();
+  await expect(b).toHaveTitle("Launch plan · Realtime Kanban");
+
+  await b.getByRole("link", { name: "Realtime Kanban" }).click();
+  await expect(b.getByRole("link", { name: /Launch plan/ })).toBeVisible();
+});
+
 test("renaming a column and seeing who else is here", async ({ context }) => {
   const { a, b } = await twoTabs(context);
   await column(a, "In progress").getByRole("button", { name: "In progress" }).click();
