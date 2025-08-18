@@ -1,7 +1,8 @@
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCorners,
   useSensor,
   useSensors,
@@ -43,7 +44,9 @@ export function Board({ boardId }: { boardId: string }) {
 
   const sensors = useSensors(
     // A small distance lets a click open the card instead of starting a drag.
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    // On touch screens a short press picks a card up, so swiping still scrolls the board.
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
   );
 
   const allCards = columns.flatMap((c) => c.cards);
