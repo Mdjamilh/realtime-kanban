@@ -92,6 +92,11 @@ export function Column({ column, index, total, replica, onOpenCard, onMoveCard }
 
       <SortableContext items={column.cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <ul ref={setNodeRef} className="flex min-h-12 flex-1 flex-col gap-2 overflow-y-auto px-1 pb-1">
+          {column.cards.length === 0 && (
+            <li className="rounded-lg border-2 border-dashed border-zinc-300 px-3 py-4 text-center text-xs text-zinc-500 dark:border-zinc-800">
+              Drop cards here
+            </li>
+          )}
           {column.cards.map((card) => (
             <Card
               key={card.id}
