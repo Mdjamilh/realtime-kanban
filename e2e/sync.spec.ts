@@ -93,6 +93,12 @@ test("naming a board syncs and shows up in recent boards", async ({ context }) =
   await expect(b.getByRole("button", { name: "Launch plan" })).toBeVisible();
   await expect(b).toHaveTitle("Launch plan · Realtime Kanban");
 
+  const [download] = await Promise.all([
+    b.waitForEvent("download"),
+    b.getByRole("button", { name: "Export as Markdown" }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe("launch-plan.md");
+
   await b.getByRole("link", { name: "Realtime Kanban" }).click();
   await expect(b.getByRole("link", { name: /Launch plan/ })).toBeVisible();
 });

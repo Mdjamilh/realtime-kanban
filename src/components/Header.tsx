@@ -1,8 +1,9 @@
-import { Check, Link2, Moon, Sun } from "lucide-react";
+import { Check, Download, Link2, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 
 import { useTheme } from "../hooks/use-theme";
 import { useBoard } from "../state/board-store";
+import { boardToMarkdown, exportFileName } from "../sync/export";
 import { BoardTitle } from "./BoardTitle";
 
 const STATUS: Record<string, { label: string; dot: string }> = {
@@ -29,7 +30,7 @@ function Avatar({ name, color, ring }: { name: string; color: string; ring?: boo
 
 export function Header({ onBoard }: { onBoard: boolean }) {
   const { theme, toggle } = useTheme();
-  const { peers, status, mode, me } = useBoard();
+  const { peers, status, mode, me, title, columns } = useBoard();
   const [copied, setCopied] = useState(false);
   const indicator = STATUS[`${mode}:${status}`] ?? STATUS["tabs:online"]!;
 
@@ -37,6 +38,15 @@ export function Header({ onBoard }: { onBoard: boolean }) {
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const download = () => {
+    const blob = new Blob([boardToMarkdown(title, columns)], { type: "text/markdown" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = exportFileName(title);
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   return (
@@ -72,6 +82,14 @@ export function Header({ onBoard }: { onBoard: boolean }) {
                 </span>
               )}
             </div>
+            <button
+              onClick={download}
+              aria-label="Export as Markdown"
+              title="Export as Markdown"
+              className="rounded-md p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+            >
+              <Download className="size-4" />
+            </button>
             <button
               onClick={share}
               className="flex items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
