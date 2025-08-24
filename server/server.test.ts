@@ -95,6 +95,21 @@ describe("sync server", () => {
   });
 });
 
+describe("rate limiting", () => {
+  it("disconnects a client that floods the server", async () => {
+    await new Promise((resolve) => server.close(resolve));
+    server = createSyncServer({ store, rateLimit: { burst: 5, perSecond: 1 } });
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    url = `ws://127.0.0.1:${(server.address() as AddressInfo).port}`;
+
+    const c = await client();
+    const closed = new Promise<number>((resolve) => c.socket.once("close", resolve));
+    for (let i = 0; i < 10; i++) c.send({ type: "ops", board: "b", ops: [op(`flood-${i}`)] });
+    expect(await closed).toBe(1008);
+    expect(store.all("b").length).toBe(5);
+  });
+});
+
 describe("OpStore", () => {
   it("persists ops per board and reports only new ones", () => {
     const s = new OpStore();
