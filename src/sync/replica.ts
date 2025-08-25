@@ -115,7 +115,9 @@ export class Replica {
    * duplicates simply dedupe instead of producing six columns.
    */
   seedIfEmpty() {
-    if (this.log.length > 0) return;
+    // Only boards that never had a column. Renaming a brand-new board doesn't
+    // count, and a board someone emptied on purpose stays empty.
+    if (this.log.some((op) => op.kind.startsWith("column.") || op.kind.startsWith("card."))) return;
     const ops = seedOps();
     this.receive(ops);
     for (const op of ops) this.onLocalOp(op);

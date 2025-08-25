@@ -23,6 +23,15 @@ test("a new board starts with example columns and cards", async ({ page }) => {
   await expect(cardButton(page, "Drag a card between columns")).toBeVisible();
 });
 
+test("renaming a brand-new board right away keeps the starter columns", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "New board" }).click();
+  await page.getByRole("button", { name: "Untitled board" }).click();
+  await page.getByLabel("Board name").fill("Quick rename");
+  await page.keyboard.press("Enter");
+  await expect(column(page, "To do")).toBeVisible();
+});
+
 test("cards added in one tab appear in the other", async ({ context }) => {
   const { a, b } = await twoTabs(context);
   await column(a, "To do").getByRole("button", { name: "Add a card" }).click();

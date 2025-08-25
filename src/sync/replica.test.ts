@@ -86,6 +86,17 @@ describe("Replica", () => {
     expect(r.view().map((c) => c.title)).toEqual(["To do", "In progress", "Done"]);
   });
 
+  it("still seeds a new board that was renamed first, but never refills an emptied one", () => {
+    const fresh = new Replica("alice");
+    fresh.renameBoard("Launch");
+    fresh.seedIfEmpty();
+    expect(fresh.view()).toHaveLength(3);
+
+    for (const column of fresh.view()) fresh.deleteColumn(column.id);
+    fresh.seedIfEmpty();
+    expect(fresh.view()).toEqual([]);
+  });
+
   it("does not duplicate the starter board when two replicas seed at once", () => {
     const sent: Op[] = [];
     const alice = new Replica("alice", (op) => sent.push(op));
