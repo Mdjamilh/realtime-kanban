@@ -13,10 +13,10 @@ const STATUS: Record<string, { label: string; dot: string }> = {
   "server:offline": { label: "Offline, changes will sync later", dot: "bg-red-500" },
 };
 
-function Avatar({ name, color, ring }: { name: string; color: string; ring?: boolean }) {
+function Avatar({ name, color, ring, you }: { name: string; color: string; ring?: boolean; you?: boolean }) {
   return (
     <span
-      title={name}
+      title={you ? `${name} (you)` : name}
       className={`flex size-7 items-center justify-center rounded-full text-xs font-semibold text-white ${ring ? "ring-2 ring-white dark:ring-zinc-950" : ""}`}
       style={{ backgroundColor: color }}
     >
@@ -72,7 +72,7 @@ export function Header({ onBoard }: { onBoard: boolean }) {
           </span>
           <div className="ml-auto flex items-center gap-3">
             <div className="flex -space-x-2" aria-label={`${peers.length + 1} viewing`}>
-              <Avatar name={`${me.name} (you)`} color={me.color} ring />
+              <Avatar name={me.name} color={me.color} ring you />
               {peers.slice(0, 4).map((p) => (
                 <Avatar key={p.client} name={p.name} color={p.color} ring />
               ))}
