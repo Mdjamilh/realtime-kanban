@@ -71,7 +71,7 @@ export function Header({ onBoard }: { onBoard: boolean }) {
             {indicator.label}
           </span>
           <div className="ml-auto flex items-center gap-3">
-            <div className="flex -space-x-2" aria-label={`${peers.length + 1} viewing`}>
+            <div className="flex -space-x-1" aria-label={`${peers.length + 1} viewing`}>
               <Avatar name={me.name} color={me.color} ring you />
               {peers.slice(0, 4).map((p) => (
                 <Avatar key={p.client} name={p.name} color={p.color} ring />
